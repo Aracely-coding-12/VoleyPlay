@@ -1,0 +1,95 @@
+.pago-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.pago-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #1e1e2e;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 24px;
+  color: #fff;
+}
+
+.pago-form input,
+.pago-form select {
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #3f3f5a;
+  background-color: #2b2b3d;
+  color: #fff;
+}
+
+.form-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-save {
+  background-color: #4caf50;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-cancel {
+  background-color: #f44336;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.pago-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.pago-card {
+  background-color: #252538;
+  border: 1px solid #383852;
+  border-radius: 8px;
+  padding: 16px;
+  color: #fff;
+}
+
+.pago-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #383852;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.pago-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.btn-edit {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btn-delete {
+  background-color: #e91e63;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
