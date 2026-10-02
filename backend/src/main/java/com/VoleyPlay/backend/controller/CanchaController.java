@@ -8,7 +8,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/cancha")
-@CrossOrigin(origins = "http://localhost:5173/")
 public class CanchaController {
     private final CanchaService canchaService;
 
