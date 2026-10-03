@@ -1,7 +1,7 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 export function obtenerCanchas() {
-    return fetch(API_URL)
+    return fetch(`${API_URL}/cancha`)
       .then((response) => {
         if(!response.ok){
             throw new Error ("Error al obtener producto");

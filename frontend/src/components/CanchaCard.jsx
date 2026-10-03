@@ -1,12 +1,12 @@
 function CanchaCard({ cancha }) {
 
     return (
-        <div key={cancha.id}>
-          <h3>ID {cancha.nombre}</h3>
+        <div>
+          <h3>{cancha.nombre}</h3>
           <p>Número: {cancha.numero}</p>
-          <p>Superficie: {cancha.tipoSuperficie}</p>
+          <p>Nombre: {cancha.nombre}</p>
+          <p>TipoSuperficie: {cancha.tipoSuperficie}</p>
           <p>Estado: {cancha.estado}</p>
-          <hr />
         </div>
     );
 }
