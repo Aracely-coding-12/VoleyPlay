@@ -1,38 +1,30 @@
 import { useEffect, useState } from "react";
 import {
-  obtenerCanchas,
-  guardarCancha,
-  actualizarCancha,
-  eliminarCancha,
-} from "../service/CanchaService.jsx";
+  obtenerClientes,
+  guardarCliente,
+  actualizarCliente,
+  eliminarCliente,
+} from "../service/ClienteService.jsx";
 import "../styles/Admin.css";
 
 const vacio = {
-  numero: "",
   nombre: "",
-  tipoSuperficie: "Arena",
-  estado: "Disponible",
+  apellido: "",
+  dni: "",
+  telefono: "",
+  email: "",
 };
 
-function estadoClase(estado) {
-  if (!estado) return "azul";
-  const valor = String(estado).toLowerCase();
-  if (valor.includes("dispon")) return "disponible";
-  if (valor.includes("ocupad")) return "ocupada";
-  if (valor.includes("manten")) return "pendiente";
-  return "azul";
-}
-
-function CanchaPage() {
-  const [canchas, setCanchas] = useState([]);
+function ClientePage() {
+  const [clientes, setClientes] = useState([]);
   const [formulario, setFormulario] = useState(vacio);
   const [editandoId, setEditandoId] = useState(null);
   const [aviso, setAviso] = useState("");
   const [esError, setEsError] = useState(false);
 
   function cargar() {
-    obtenerCanchas()
-      .then(setCanchas)
+    obtenerClientes()
+      .then(setClientes)
       .catch((error) => console.error("Error:", error));
   }
 
@@ -51,39 +43,39 @@ function CanchaPage() {
   async function handleSubmit(e) {
     e.preventDefault();
     try {
-      const datos = { ...formulario, numero: Number(formulario.numero) };
       if (editandoId) {
-        await actualizarCancha(editandoId, datos);
-        setAviso("Cancha actualizada correctamente.");
+        await actualizarCliente(editandoId, formulario);
+        setAviso("Cliente actualizado correctamente.");
       } else {
-        await guardarCancha(datos);
-        setAviso("Cancha guardada correctamente.");
+        await guardarCliente(formulario);
+        setAviso("Cliente guardado correctamente.");
       }
       setEsError(false);
       limpiar();
       cargar();
     } catch (error) {
       console.error("Error:", error);
-      setAviso("No se pudo guardar la cancha.");
+      setAviso("No se pudo guardar el cliente.");
       setEsError(true);
     }
   }
 
-  function editar(cancha) {
+  function editar(cliente) {
     setFormulario({
-      numero: cancha.numero ?? "",
-      nombre: cancha.nombre || "",
-      tipoSuperficie: cancha.tipoSuperficie || "Arena",
-      estado: cancha.estado || "Disponible",
+      nombre: cliente.nombre || "",
+      apellido: cliente.apellido || "",
+      dni: cliente.dni || "",
+      telefono: cliente.telefono || "",
+      email: cliente.email || "",
     });
-    setEditandoId(cancha.id);
+    setEditandoId(cliente.id);
     setAviso("");
   }
 
   async function borrar(id) {
-    if (!window.confirm("¿Eliminar esta cancha?")) return;
+    if (!window.confirm("¿Eliminar este cliente?")) return;
     try {
-      await eliminarCancha(id);
+      await eliminarCliente(id);
       cargar();
     } catch (error) {
       console.error("Error:", error);
@@ -94,53 +86,52 @@ function CanchaPage() {
     <div>
       <div className="pagina-encabezado">
         <div>
-          <h1>Canchas</h1>
-          <p>Administra las canchas y su estado.</p>
+          <h1>Clientes</h1>
+          <p>Gestiona los datos de tus clientes.</p>
         </div>
         <button type="button" className="btn-crear" onClick={limpiar}>
-          + Crear cancha
+          + Crear cliente
         </button>
       </div>
 
       <div className="tabla-caja">
         <div className="tabla-cabecera">
-          <h3>Listado de canchas</h3>
+          <h3>Lista de clientes</h3>
         </div>
         <table className="tabla">
           <thead>
             <tr>
               <th>ID</th>
               <th>Nombre</th>
-              <th>Número</th>
-              <th>Superficie</th>
-              <th>Estado</th>
+              <th>Apellido</th>
+              <th>DNI</th>
+              <th>Teléfono</th>
+              <th>Email</th>
               <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {canchas.length === 0 && (
+            {clientes.length === 0 && (
               <tr>
-                <td colSpan="6" className="tabla-vacio">
-                  No hay canchas registradas.
+                <td colSpan="7" className="tabla-vacio">
+                  No hay clientes registrados.
                 </td>
               </tr>
-            )}            {canchas.map((cancha) => (
-              <tr key={cancha.id}>
-                <td>{cancha.id}</td>
-                <td>{cancha.nombre}</td>
-                <td>{cancha.numero}</td>
-                <td>{cancha.tipoSuperficie}</td>
-                <td>
-                  <span className={`badge ${estadoClase(cancha.estado)}`}>
-                    {cancha.estado}
-                  </span>
-                </td>
+            )}
+            {clientes.map((cliente) => (
+              <tr key={cliente.id}>
+                <td>{cliente.id}</td>
+                <td>{cliente.nombre}</td>
+                <td>{cliente.apellido}</td>
+                <td>{cliente.dni}</td>
+                <td>{cliente.telefono}</td>
+                <td>{cliente.email}</td>
                 <td>
                   <div className="acciones">
                     <button
                       type="button"
                       className="btn-accion editar"
-                      onClick={() => editar(cancha)}
+                      onClick={() => editar(cliente)}
                       title="Editar"
                     >
                       ✏️
@@ -148,7 +139,7 @@ function CanchaPage() {
                     <button
                       type="button"
                       className="btn-accion eliminar"
-                      onClick={() => borrar(cancha.id)}
+                      onClick={() => borrar(cliente.id)}
                       title="Eliminar"
                     >
                       🗑️
@@ -162,11 +153,11 @@ function CanchaPage() {
       </div>
 
       <div className="panel-formulario">
-        <h3>{editandoId ? "Editar cancha" : "Agregar cancha"}</h3>
+        <h3>{editandoId ? "Editar cliente" : "Registrar cliente"}</h3>
         <form onSubmit={handleSubmit}>
           <div className="form-grid">
             <div className="campo">
-              <label>Nombre de la cancha</label>
+              <label>Nombre</label>
               <input
                 name="nombre"
                 value={formulario.nombre}
@@ -175,39 +166,34 @@ function CanchaPage() {
               />
             </div>
             <div className="campo">
-              <label>Número</label>
+              <label>Apellido</label>
               <input
-                name="numero"
-                type="number"
-                value={formulario.numero}
+                name="apellido"
+                value={formulario.apellido}
                 onChange={handleChange}
                 required
               />
             </div>
             <div className="campo">
-              <label>Tipo de superficie</label>
-              <select
-                name="tipoSuperficie"
-                value={formulario.tipoSuperficie}
-                onChange={handleChange}
-              >
-                <option value="Arena">Arena</option>
-                <option value="Cemento">Cemento</option>
-                <option value="Losa">Losa</option>
-                <option value="Sintético">Sintético</option>
-              </select>
+              <label>DNI</label>
+              <input name="dni" value={formulario.dni} onChange={handleChange} />
             </div>
             <div className="campo">
-              <label>Estado</label>
-              <select
-                name="estado"
-                value={formulario.estado}
+              <label>Teléfono</label>
+              <input
+                name="telefono"
+                value={formulario.telefono}
                 onChange={handleChange}
-              >
-                <option value="Disponible">Disponible</option>
-                <option value="Ocupada">Ocupada</option>
-                <option value="Mantenimiento">Mantenimiento</option>
-              </select>
+              />
+            </div>
+            <div className="campo">
+              <label>Email</label>
+              <input
+                type="email"
+                name="email"
+                value={formulario.email}
+                onChange={handleChange}
+              />
             </div>
             <div className="form-botones">
               <button type="submit" className="btn-guardar">
@@ -227,4 +213,4 @@ function CanchaPage() {
   );
 }
 
-export default CanchaPage;
+export default ClientePage;
