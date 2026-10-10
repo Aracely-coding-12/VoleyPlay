@@ -38,6 +38,7 @@ public class HorarioService {
         horario.setHoraInicio(datos.getHoraInicio());
         horario.setHoraFin(datos.getHoraFin());
         horario.setPrecio(datos.getPrecio());
+        horario.setEstado(datos.getEstado());
 
         return horarioRepository.save(horario);
     }

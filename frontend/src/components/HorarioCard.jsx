@@ -5,6 +5,7 @@ function HorarioCard({ horario }) {
           <p>Hora inicio: {horario.horaInicio}</p>
           <p>Hora fin: {horario.horaFin}</p>
           <p>Precio: S/ {horario.precio}</p>
+          <p>estado: {horario.estado}</p>
         </div>
     );
 }

@@ -21,14 +21,18 @@ public class Horario {
 
     private double precio;
 
+    private String estado;
+
     public Horario() {
     }
 
-    public Horario(Long id, LocalTime horaInicio, LocalTime horaFin, double precio) {
+    public Horario(Long id, LocalTime horaInicio, LocalTime horaFin, double precio, String estado) {
         this.id = id;
         this.horaInicio = horaInicio;
         this.horaFin = horaFin;
         this.precio = precio;
+        this.estado = estado;
+
     }
 
     public Long getId() {
@@ -61,5 +65,13 @@ public class Horario {
 
     public void setPrecio(double precio) {
         this.precio = precio;
+    }
+
+    public String getEstado(){
+        return estado;
+    }
+
+    public void setEstado(String estado){
+        this.estado = estado;
     }
 }
