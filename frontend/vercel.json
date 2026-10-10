@@ -1,0 +1,74 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "",
+  "installCommand": "",
+  "outputDirectory": ".",
+  "rewrites": [
+    {
+      "source": "/css/:path*",
+      "destination": "/static/css/:path*"
+    },
+    {
+      "source": "/images/:path*",
+      "destination": "/static/images/:path*"
+    },
+    {
+      "source": "/",
+      "destination": "https://voleyplay-production.up.railway.app/"
+    },
+    {
+      "source": "/login",
+      "destination": "https://voleyplay-production.up.railway.app/login"
+    },
+    {
+      "source": "/registro",
+      "destination": "https://voleyplay-production.up.railway.app/registro"
+    },
+    {
+      "source": "/logout",
+      "destination": "https://voleyplay-production.up.railway.app/logout"
+    },
+    {
+      "source": "/panel",
+      "destination": "https://voleyplay-production.up.railway.app/panel"
+    },
+    {
+      "source": "/panel/:path*",
+      "destination": "https://voleyplay-production.up.railway.app/panel/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "https://voleyplay-production.up.railway.app/api/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/login",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/registro",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    },
+    {
+      "source": "/panel/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store"
+        }
+      ]
+    }
+  ]
+}

@@ -1,7 +1,8 @@
-# Config File Path: /backend/railway.toml; Root Directory: / (repositorio completo).
+# En Railway: Root Directory /backend y Config File Path /backend/railway.toml.
 [build]
 builder = "DOCKERFILE"
-dockerfilePath = "backend/Dockerfile"
+dockerfilePath = "Dockerfile"
+
 [deploy]
 healthcheckPath = "/login"
 healthcheckTimeout = 120
