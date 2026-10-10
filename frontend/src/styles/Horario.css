@@ -1,0 +1,18 @@
+.horario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.horario-card {
+  background-color: #252538;
+  border: 1px solid #383852;
+  border-radius: 8px;
+  padding: 16px;
+  color: #fff;
+}
+
+.horario-card h3 {
+  margin: 0 0 8px;
+}

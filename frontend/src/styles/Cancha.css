@@ -1,0 +1,28 @@
+.cancha-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.cancha-error {
+  color: #f44336;
+  font-weight: bold;
+}
+
+.cancha-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.cancha-card {
+  background-color: #252538;
+  border: 1px solid #383852;
+  border-radius: 8px;
+  padding: 16px;
+  color: #fff;
+}
+
+.cancha-card h3 {
+  margin: 0 0 8px;
+}
