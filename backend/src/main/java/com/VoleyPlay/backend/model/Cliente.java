@@ -2,7 +2,6 @@ package com.VoleyPlay.backend.model;
 
 
 import jakarta.persistence.*;
-import org.springframework.stereotype.Service;
 
 @Entity
 @Table(name = "cliente", schema = "voley_playa")

@@ -1,1 +1,58 @@
-<!DOCTYPE html><html lang="es" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments :: head('Inicio')}"></head><body><div class="layout"><aside th:replace="~{fragments :: sidebar}"></aside><main class="content"><header class="page-heading"><div><h1>Resumen del panel</h1><p>Tu actividad y próximas reservas.</p></div><a class="primary" href="/panel/reservas#formulario">＋ Registrar reserva</a></header><div class="stats"><section class="card" th:each="stat : ${stats}"><p th:text="${stat.label}"></p><strong th:text="${stat.value}"></strong></section></div><section class="card"><div class="card-heading"><h2>Próximas reservas</h2><a href="/panel/reservas">Ver todas →</a></div><div class="table-scroll"><table><thead><tr><th>ID</th><th>Cliente</th><th>Cancha</th><th>Fecha</th><th>Turno</th><th>Total</th><th>Estado</th></tr></thead><tbody><tr th:each="row : ${upcoming}"><td><a th:href="@{/panel/reservas(edit=${row.id})}" th:text="${row.id}"></a></td><td th:each="value : ${row.values}" th:text="${value}"></td></tr><tr th:if="${#lists.isEmpty(upcoming)}"><td colspan="7" class="empty">No hay reservas próximas.</td></tr></tbody></table></div></section></main></div></body></html>
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments :: head('Inicio')}"></head>
+  <body>
+    <div class="layout">
+      <aside th:replace="~{fragments :: sidebar}"></aside>
+      <main class="content">
+        <header class="page-heading">
+          <div>
+            <h1>Resumen del panel</h1>
+            <p>Tu actividad y próximas reservas.</p>
+          </div>
+          <a class="primary" href="/panel/reservas#formulario">＋ Registrar reserva</a>
+        </header>
+        <!-- Los totales llegan calculados desde WebController. -->
+        <div class="stats">
+          <section class="card" th:each="stat : ${stats}">
+            <p th:text="${stat.label}"></p>
+            <strong th:text="${stat.value}"></strong>
+          </section>
+        </div>
+        <!-- Reservas próximas, ordenadas por fecha y hora. -->
+        <section class="card">
+          <div class="card-heading">
+            <h2>Próximas reservas</h2>
+            <a href="/panel/reservas">Ver todas →</a>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Cliente</th>
+                  <th>Cancha</th>
+                  <th>Fecha</th>
+                  <th>Turno</th>
+                  <th>Total</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${upcoming}">
+                  <td>
+                    <a th:href="@{/panel/reservas(edit=${row.id})}" th:text="${row.id}"></a>
+                  </td>
+                  <td th:each="value : ${row.values}" th:text="${value}"></td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(upcoming)}">
+                  <td colspan="7" class="empty">No hay reservas próximas.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

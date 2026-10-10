@@ -1,5 +1,164 @@
-<!DOCTYPE html><html lang="es" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments :: head(${title})}"></head><body><div class="layout"><aside th:replace="~{fragments :: sidebar}"></aside><main class="content"><header class="page-heading"><div><h1 th:text="${title}"></h1><p>Consulta y administra tus registros.</p></div><a class="primary" th:href="@{/panel/{kind}(kind=${kind})} + '#formulario'">＋ Registrar</a></header><div th:replace="~{fragments :: notices}"></div>
-<section th:if="${deleting}" class="confirm"><h2 th:text="'¿Eliminar registro #' + ${deleting.id} + '?' "></h2><p th:text="${#strings.listJoin(deleting.values,' · ')}"></p><p>Se eliminará si no tiene datos vinculados.</p><form th:action="@{/panel/{kind}/{id}/eliminar(kind=${kind},id=${deleting.id})}" method="post"><button class="danger">Confirmar eliminación</button><a class="secondary" th:href="@{/panel/{kind}(kind=${kind})}">Cancelar</a></form></section>
-<section th:if="${slots != null}" class="card"><div class="card-heading"><h2>Disponibilidad</h2><form th:action="@{/panel/{kind}(kind=${kind})}" method="get" class="inline"><label for="date">Fecha</label><input id="date" name="date" type="date" th:value="${date}" required><button class="secondary">Consultar</button></form></div><div class="table-scroll"><table><thead><tr><th>Horario</th><th th:each="court : ${courts}" th:text="${court.nombre}"></th></tr></thead><tbody><tr th:each="slot : ${slots}"><td th:text="${slot.label}"></td><td th:each="cell : ${slot.cells}"><a th:if="${cell.state == 'Disponible'}" class="badge available" th:href="${cell.link}">Disponible</a><span th:unless="${cell.state == 'Disponible'}" class="badge" th:text="${cell.state}"></span></td></tr><tr th:if="${#lists.isEmpty(slots) or #lists.isEmpty(courts)}"><td>Registra canchas y horarios para consultar disponibilidad.</td></tr></tbody></table></div></section>
-<section class="card"><div class="card-heading"><h2 th:text="${title}"></h2><form th:action="@{/panel/{kind}(kind=${kind})}" method="get" class="inline"><label class="sr-only" for="q">Buscar registros</label><input id="q" name="q" th:value="${q}" placeholder="Buscar registros…"><button class="secondary">Buscar</button><a th:if="${q != ''}" th:href="@{/panel/{kind}(kind=${kind})}">Limpiar</a></form></div><div class="table-scroll"><table><thead><tr><th>ID</th><th th:each="heading : ${headers}" th:text="${heading}"></th><th>Acciones</th></tr></thead><tbody><tr th:each="row : ${rows}"><td th:text="${row.id}"></td><td th:each="value : ${row.values}" th:text="${value}"></td><td><div class="actions"><a class="icon-button" th:href="@{/panel/{kind}(kind=${kind},edit=${row.id})} + '#formulario'" th:aria-label="'Editar registro ' + ${row.id}"><svg th:replace="~{fragments :: icon('edit')}"></svg></a><a class="icon-button danger-text" th:href="@{/panel/{kind}(kind=${kind},delete=${row.id})}" th:aria-label="'Eliminar registro ' + ${row.id}"><svg th:replace="~{fragments :: icon('trash')}"></svg></a></div></td></tr><tr th:if="${#lists.isEmpty(rows)}"><td th:colspan="${#lists.size(headers)+2}" class="empty">No hay registros que mostrar.</td></tr></tbody></table></div><p class="count" th:text="${#lists.size(rows)} + ' registros'"></p></section>
-<section class="card form-card" id="formulario"><h2 th:text="${editId == null ? 'Registrar' : 'Editar registro #' + editId}"></h2><p th:if="${kind == 'reservas'}">El total se calcula con el precio del horario. La disponibilidad se valida al guardar.</p><form th:action="@{/panel/{kind}/guardar(kind=${kind})}" method="post"><input type="hidden" name="id" th:value="${editId}"><div class="form-grid"><div th:each="field : ${fields}"><label th:for="${field.name}" th:text="${field.label}"></label><select th:if="${field.type == 'select'}" th:id="${field.name}" th:name="${field.name}" th:required="${field.required}"><option value="">Seleccionar</option><option th:if="${form[field.name] != null and form[field.name] != '' and !#lists.contains(field.options.![value],form[field.name])}" th:value="${form[field.name]}" th:text="${form[field.name]} + ' · valor actual'" selected></option><option th:each="option : ${field.options}" th:value="${option.value}" th:text="${option.label}" th:selected="${option.value == form[field.name]}"></option></select><input th:unless="${field.type == 'select'}" th:id="${field.name}" th:name="${field.name}" th:type="${field.type}" th:value="${form[field.name]}" th:required="${field.required}" th:step="${field.type == 'number' ? (field.name == 'numero' ? '1' : '0.01') : null}" th:min="${field.type == 'number' ? (field.name == 'numero' ? '1' : '0.01') : null}" th:max="${field.type == 'date' and kind == 'pagos' ? date : null}"></div></div><div class="form-actions"><button class="primary">Guardar</button><a class="secondary" th:href="@{/panel/{kind}(kind=${kind})}">Cancelar / Limpiar</a></div></form></section></main></div></body></html>
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <!-- Esta página se comparte entre clientes, canchas, horarios, reservas y pagos. -->
+  <head th:replace="~{fragments :: head(${title})}"></head>
+  <body>
+    <div class="layout">
+      <aside th:replace="~{fragments :: sidebar}"></aside>
+      <main class="content">
+        <header class="page-heading">
+          <div>
+            <h1 th:text="${title}"></h1>
+            <p>Consulta y administra tus registros.</p>
+          </div>
+          <a class="primary" th:href="@{/panel/{kind}(kind=${kind})} + '#formulario'">＋ Registrar</a>
+        </header>
+        <div th:replace="~{fragments :: notices}"></div>
+        <!-- Eliminar primero pide confirmación; este enlace todavía no borra nada. -->
+        <section th:if="${deleting}" class="confirm">
+          <h2 th:text="'¿Eliminar registro #' + ${deleting.id} + '?' "></h2>
+          <p th:text="${#strings.listJoin(deleting.values,' · ')}"></p>
+          <p>Se eliminará si no tiene datos vinculados.</p>
+          <form th:action="@{/panel/{kind}/{id}/eliminar(kind=${kind},id=${deleting.id})}" method="post">
+            <button class="danger">Confirmar eliminación</button>
+            <a class="secondary" th:href="@{/panel/{kind}(kind=${kind})}">Cancelar</a>
+          </form>
+        </section>
+        <!-- Disponibilidad por fecha. Solo aparece en horarios y reservas. -->
+        <section th:if="${slots != null}" class="card">
+          <div class="card-heading">
+            <h2>Disponibilidad</h2>
+            <form th:action="@{/panel/{kind}(kind=${kind})}" method="get" class="inline">
+              <label for="date">Fecha</label>
+              <input id="date" name="date" type="date" th:value="${date}" required>
+              <button class="secondary">Consultar</button>
+            </form>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Horario</th>
+                  <th th:each="court : ${courts}" th:text="${court.nombre}"></th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="slot : ${slots}">
+                  <td th:text="${slot.label}"></td>
+                  <td th:each="cell : ${slot.cells}">
+                    <a th:if="${cell.state == 'Disponible'}" class="badge available" th:href="${cell.link}">
+                      Disponible
+                    </a>
+                    <span th:unless="${cell.state == 'Disponible'}" class="badge" th:text="${cell.state}"></span>
+                  </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(slots) or #lists.isEmpty(courts)}">
+                  <td>Registra canchas y horarios para consultar disponibilidad.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+        <!-- Java prepara las filas y aplica la búsqueda antes de mostrar la tabla. -->
+        <section class="card">
+          <div class="card-heading">
+            <h2 th:text="${title}"></h2>
+            <form th:action="@{/panel/{kind}(kind=${kind})}" method="get" class="inline">
+              <label class="sr-only" for="q">Buscar registros</label>
+              <input id="q" name="q" th:value="${q}" placeholder="Buscar registros…">
+              <button class="secondary">Buscar</button>
+              <a th:if="${q != ''}" th:href="@{/panel/{kind}(kind=${kind})}">Limpiar</a>
+            </form>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th th:each="heading : ${headers}" th:text="${heading}"></th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr th:each="row : ${rows}">
+                  <td th:text="${row.id}"></td>
+                  <td th:each="value : ${row.values}" th:text="${value}"></td>
+                  <td>
+                    <div class="actions">
+                      <a
+                        class="icon-button"
+                        th:href="@{/panel/{kind}(kind=${kind},edit=${row.id})} + '#formulario'"
+                        th:aria-label="'Editar registro ' + ${row.id}">
+                        <svg th:replace="~{fragments :: icon('edit')}"></svg>
+                      </a>
+                      <a
+                        class="icon-button danger-text"
+                        th:href="@{/panel/{kind}(kind=${kind},delete=${row.id})}"
+                        th:aria-label="'Eliminar registro ' + ${row.id}">
+                        <svg th:replace="~{fragments :: icon('trash')}"></svg>
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(rows)}">
+                  <td th:colspan="${#lists.size(headers)+2}" class="empty">No hay registros que mostrar.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="count" th:text="${#lists.size(rows)} + ' registros'"></p>
+        </section>
+        <!-- El mismo formulario registra o edita, según tenga un id. -->
+        <section class="card form-card" id="formulario">
+          <h2 th:text="${editId == null ? 'Registrar' : 'Editar registro #' + editId}"></h2>
+          <p th:if="${kind == 'reservas'}">
+            El total se calcula con el precio del horario. La disponibilidad se valida al guardar.
+          </p>
+          <form th:action="@{/panel/{kind}/guardar(kind=${kind})}" method="post">
+            <input type="hidden" name="id" th:value="${editId}">
+            <div class="form-grid">
+              <!-- WebController define los campos de cada sección. -->
+              <div th:each="field : ${fields}">
+                <label th:for="${field.name}" th:text="${field.label}"></label>
+                <select
+                  th:if="${field.type == 'select'}"
+                  th:id="${field.name}"
+                  th:name="${field.name}"
+                  th:required="${field.required}">
+                  <option value="">Seleccionar</option>
+                  <!-- Conserva el valor anterior si ya no figura entre las opciones. -->
+                  <option
+                    th:if="${form[field.name] != null and form[field.name] != '' and !#lists.contains(field.options.![value],form[field.name])}"
+                    th:value="${form[field.name]}"
+                    th:text="${form[field.name]} + ' · valor actual'"
+                    selected>
+                  </option>
+                  <option
+                    th:each="option : ${field.options}"
+                    th:value="${option.value}"
+                    th:text="${option.label}"
+                    th:selected="${option.value == form[field.name]}">
+                  </option>
+                </select>
+                <input
+                  th:unless="${field.type == 'select'}"
+                  th:id="${field.name}"
+                  th:name="${field.name}"
+                  th:type="${field.type}"
+                  th:value="${form[field.name]}"
+                  th:required="${field.required}"
+                  th:step="${field.type == 'number' ? (field.name == 'numero' ? '1' : '0.01') : null}"
+                  th:min="${field.type == 'number' ? (field.name == 'numero' ? '1' : '0.01') : null}"
+                  th:max="${field.type == 'date' and kind == 'pagos' ? date : null}">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="primary">Guardar</button>
+              <a class="secondary" th:href="@{/panel/{kind}(kind=${kind})}">Cancelar / Limpiar</a>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>

@@ -1,1 +1,34 @@
-<!DOCTYPE html><html lang="es" xmlns:th="http://www.thymeleaf.org"><head th:replace="~{fragments :: head('Iniciar sesión')}"></head><body class="auth"><main class="auth-card"><a class="brand" href="/login"><span class="brand-icon"><svg th:replace="~{fragments :: icon('ball')}"></svg></span>Vóley<span>Play</span></a><h1>Iniciar sesión</h1><p>Accede al panel de administración.</p><div th:replace="~{fragments :: notices}"></div><p th:if="${param.error}" class="notice error">Usuario o contraseña incorrectos.</p><p th:if="${param.expired}" class="notice error">La sesión expiró. Vuelve a iniciar sesión.</p><p th:if="${param.logout}" class="notice success">Sesión cerrada correctamente.</p><form th:action="@{/login}" method="post"><label for="username">Usuario</label><input id="username" name="username" required autocomplete="username" maxlength="40"><label for="password">Contraseña</label><input id="password" name="password" type="password" required autocomplete="current-password"><button class="primary full">Entrar al panel →</button></form><p class="auth-footer">¿No tienes cuenta? <a href="/registro">Crear cuenta</a></p></main></body></html>
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+  <head th:replace="~{fragments :: head('Iniciar sesión')}"></head>
+  <body class="auth">
+    <main class="auth-card">
+      <a class="brand" href="/login">
+        <span class="brand-icon">
+          <svg th:replace="~{fragments :: icon('ball')}"></svg>
+        </span>
+        Vóley
+        <span>Play</span>
+      </a>
+      <h1>Iniciar sesión</h1>
+      <p>Accede al panel de administración.</p>
+      <!-- Avisos de registro y errores del inicio de sesión. -->
+      <div th:replace="~{fragments :: notices}"></div>
+      <p th:if="${param.error}" class="notice error">Usuario o contraseña incorrectos.</p>
+      <p th:if="${param.expired}" class="notice error">La sesión expiró. Vuelve a iniciar sesión.</p>
+      <p th:if="${param.logout}" class="notice success">Sesión cerrada correctamente.</p>
+      <!-- Spring Security recibe el usuario y la contraseña. Thymeleaf añade el token CSRF. -->
+      <form th:action="@{/login}" method="post">
+        <label for="username">Usuario</label>
+        <input id="username" name="username" required autocomplete="username" maxlength="40">
+        <label for="password">Contraseña</label>
+        <input id="password" name="password" type="password" required autocomplete="current-password">
+        <button class="primary full">Entrar al panel →</button>
+      </form>
+      <p class="auth-footer">
+        ¿No tienes cuenta?
+        <a href="/registro">Crear cuenta</a>
+      </p>
+    </main>
+  </body>
+</html>
