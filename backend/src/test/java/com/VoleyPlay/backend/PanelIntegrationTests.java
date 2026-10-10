@@ -63,6 +63,62 @@ class PanelIntegrationTests {
         return Map.of("idReserva",reserva,"monto",monto,"fechaPago",LocalDate.now(ZoneId.of("America/Lima")).toString(),"metodoPago","Yape","estado",estado);
     }
 
+    HttpResponse<String> web(String method,String path,Map<String,String> form) throws Exception {
+        var b=HttpRequest.newBuilder(URI.create("http://localhost:"+port+path));
+        if(form==null) b.GET();else {
+            String body=form.entrySet().stream().map(e->URLEncoder.encode(e.getKey(),java.nio.charset.StandardCharsets.UTF_8)+"="+URLEncoder.encode(e.getValue(),java.nio.charset.StandardCharsets.UTF_8)).collect(java.util.stream.Collectors.joining("&"));
+            b.header("Content-Type","application/x-www-form-urlencoded").method(method,HttpRequest.BodyPublishers.ofString(body));
+        }
+        return client.send(b.build(),HttpResponse.BodyHandlers.ofString());
+    }
+    String webToken(String html) {
+        var matcher=java.util.regex.Pattern.compile("name=\"_csrf\"[^>]*value=\"([^\"]+)\"").matcher(html);
+        assertTrue(matcher.find(),html);return matcher.group(1);
+    }
+    @Test void paginasSinJavascriptRegistroLoginCrudYDisponibilidad() throws Exception {
+        assertEquals(204,call("POST","/auth/logout",null).statusCode());
+        assertEquals(302,web("GET","/panel",null).statusCode());
+        var page=web("GET","/registro",null);assertEquals(200,page.statusCode(),page.body());
+        assertFalse(page.body().contains("<script"));
+        var register=new HashMap<>(Map.of("username","web.usuario","password","Nueva-clave-2026!","confirmation","diferente","invitationCode","Invitacion-test-2026!","_csrf",webToken(page.body())));
+        var mismatch=web("POST","/registro",register);assertEquals(200,mismatch.statusCode(),mismatch.body());assertTrue(mismatch.body().contains("contraseñas no coinciden"));assertTrue(usuarios.findByUsername("web.usuario").isEmpty());
+        register.put("confirmation","Nueva-clave-2026!");register.put("_csrf",webToken(mismatch.body()));assertEquals(302,web("POST","/registro",register).statusCode());
+        page=web("GET","/login",null);assertEquals(200,page.statusCode(),page.body());
+        assertEquals(302,web("POST","/login",Map.of("username","web.usuario","password","Nueva-clave-2026!","_csrf",webToken(page.body()))).statusCode());
+        for(String path:List.of("/panel","/panel/clientes","/panel/canchas","/panel/horarios","/panel/reservas","/panel/pagos","/css/app.css")) {
+            page=web("GET",path,null);assertEquals(200,page.statusCode(),path+page.body());assertFalse(page.body().contains("<script"));
+        }
+        page=web("GET","/panel/clientes",null);
+        var form=new HashMap<>(Map.of("nombre","Ángela","apellido","Prueba","dni","","telefono","","email","","_csrf",webToken(page.body())));
+        assertEquals(302,web("POST","/panel/clientes/guardar",form).statusCode());
+        long id=clientes.findAll().getFirst().getId();
+        page=web("GET","/panel/clientes?edit="+id,null);assertEquals(200,page.statusCode(),page.body());assertTrue(page.body().contains("Ángela"));
+        var searched=web("GET","/panel/clientes?q=angela%20prueba",null);assertEquals(200,searched.statusCode());assertTrue(searched.body().contains("1 registros"));
+        assertEquals(302,web("POST","/panel/clientes/guardar",Map.of("nombre","Sin token","apellido","Prueba")).statusCode());assertEquals(1,clientes.count());
+        form.put("id",Long.toString(id));form.put("nombre","Ana");form.put("_csrf",webToken(page.body()));assertEquals(302,web("POST","/panel/clientes/guardar",form).statusCode());
+        page=web("GET","/panel/clientes?delete="+id,null);assertEquals(200,page.statusCode(),page.body());assertTrue(page.body().contains("Confirmar eliminación"));
+        assertEquals(302,web("POST","/panel/clientes/"+id+"/eliminar",Map.of("_csrf",webToken(page.body()))).statusCode());assertTrue(clientes.findAll().isEmpty());
+        long cl=crear("/cliente",cliente("12345678"));
+        page=web("GET","/panel/canchas",null);
+        assertEquals(302,web("POST","/panel/canchas/guardar",Map.of("numero","1","nombre","Cancha web","tipoSuperficie","Arena","estado","Disponible","_csrf",webToken(page.body()))).statusCode());
+        long co=canchas.findAll().getFirst().getId();
+        page=web("GET","/panel/horarios",null);
+        assertEquals(302,web("POST","/panel/horarios/guardar",Map.of("horaInicio","23:00","horaFin","01:00","precio","50","estado","Disponible","_csrf",webToken(page.body()))).statusCode());
+        long sl=horarios.findAll().getFirst().getId();
+        page=web("GET","/panel/reservas?date="+fecha,null);assertEquals(200,page.statusCode(),page.body());assertTrue(page.body().contains("(+1 día)"));
+        form=new HashMap<>(Map.of("idCliente",Long.toString(cl),"idCancha",Long.toString(co),"idHorario",Long.toString(sl),"fechaReserva",fecha,"estado","Confirmada","_csrf",webToken(page.body())));
+        assertEquals(302,web("POST","/panel/reservas/guardar",form).statusCode());assertEquals(50,reservas.findAll().getFirst().getTotal());
+        page=web("GET","/panel/reservas?date="+fecha,null);assertTrue(page.body().contains("Reservado"));
+        form.put("_csrf",webToken(page.body()));var conflict=web("POST","/panel/reservas/guardar",form);assertEquals(200,conflict.statusCode(),conflict.body());assertTrue(conflict.body().contains("coincide con ese horario"));
+        page=web("GET","/panel/pagos",null);long re=reservas.findAll().getFirst().getId();
+        form=new HashMap<>(Map.of("idReserva",Long.toString(re),"fechaPago",LocalDate.now(ZoneId.of("America/Lima")).toString(),"monto","20","metodoPago","Yape","estado","Pagado","_csrf",webToken(page.body())));
+        assertEquals(302,web("POST","/panel/pagos/guardar",form).statusCode());assertEquals(20,pagos.findAll().getFirst().getMonto());
+        page=web("GET","/panel/pagos",null);assertTrue(page.body().contains("saldo S/ 30.00"));
+        form.put("monto","31");form.put("_csrf",webToken(page.body()));var overpaid=web("POST","/panel/pagos/guardar",form);assertEquals(200,overpaid.statusCode(),overpaid.body());assertTrue(overpaid.body().contains("supera el saldo"));assertEquals(1,pagos.count());
+        page=web("GET","/panel/reservas?delete="+re,null);assertEquals(302,web("POST","/panel/reservas/"+re+"/eliminar",Map.of("_csrf",webToken(page.body()))).statusCode());assertEquals(1,reservas.count());
+        page=web("GET","/panel",null);assertEquals(302,web("POST","/logout",Map.of("_csrf",webToken(page.body()))).statusCode());assertEquals(302,web("GET","/panel",null).statusCode());
+    }
+
     @Test void registroPersistenteValidaInvitacionCsrfYLogin() throws Exception {
         assertEquals(204,call("POST","/auth/logout",null).statusCode());
         var data=Map.of("username","Nuevo.Usuario","password","Nueva-clave-2026!","invitationCode","Invitacion-test-2026!");

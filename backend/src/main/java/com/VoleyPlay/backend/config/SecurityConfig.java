@@ -31,8 +31,20 @@ public class SecurityConfig {
     }
 
     @Bean
+    @org.springframework.core.annotation.Order(1)
+    SecurityFilterChain paginas(HttpSecurity http) throws Exception {
+        return http.securityMatcher(req -> !req.getServletPath().startsWith("/api/"))
+            .authorizeHttpRequests(auth -> auth.requestMatchers("/login", "/registro", "/css/**", "/images/**", "/error").permitAll().anyRequest().authenticated())
+            .formLogin(login -> login.loginPage("/login").loginProcessingUrl("/login").defaultSuccessUrl("/panel", true).failureUrl("/login?error"))
+            .logout(logout -> logout.logoutUrl("/logout").logoutSuccessUrl("/login?logout").invalidateHttpSession(true).deleteCookies("JSESSIONID"))
+            .exceptionHandling(errors -> errors.accessDeniedHandler((req,res,error) -> res.sendRedirect("/login?expired")))
+            .build();
+    }
+
+    @Bean
+    @org.springframework.core.annotation.Order(2)
     SecurityFilterChain seguridad(HttpSecurity http) throws Exception {
-        return http.cors(cors -> {})
+        return http.securityMatcher("/api/**").cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/csrf", "/api/auth/login", "/api/auth/register", "/api/auth/registration", "/error").permitAll()
                         .anyRequest().authenticated())
