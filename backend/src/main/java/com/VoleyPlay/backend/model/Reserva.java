@@ -1,6 +1,7 @@
 package com.VoleyPlay.backend.model;
 
 import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonCreator;
 
 import java.time.LocalDate;
 
@@ -29,6 +30,7 @@ public class Reserva {
 
     private double total;
 
+    @JsonCreator
     public Reserva() {
     }
 

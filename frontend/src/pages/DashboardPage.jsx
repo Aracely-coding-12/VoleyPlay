@@ -1,184 +1,29 @@
-import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import { obtenerCanchas } from "../service/CanchaService.jsx";
-import { obtenerClientes } from "../service/ClienteService.jsx";
-import { obtenerHorarios } from "../service/HorarioServise.jsx";
-import { obtenerReservas } from "../service/ReservaServise.jsx";
-import { obtenerPagos } from "../service/PagoServise.jsx";
-
-function nombreDe(lista, id) {
-  const encontrado = lista.find((item) => item.id === id);
-  return encontrado ? encontrado.nombre : `#${id}`;
+import { useSearchParams, Link } from "react-router-dom";
+import { usePanel } from "../context/contexts.js";
+import { resumen, filtrar, nombre, hora, money } from "../utils/domain.js";
+import Badge from "../components/Badge.jsx";
+import Icon from "../components/Icon.jsx";
+export default function DashboardPage() {
+  const { canchas, clientes, horarios, reservas, pagos }=usePanel();
+  const [params]=useSearchParams();
+  const totals=resumen(reservas,pagos,horarios);
+  const search=row=>[...Object.values(row),nombre(clientes,row.idCliente),nombre(canchas,row.idCancha),hora(horarios.find(h=>h.id===row.idHorario))];
+  const month=new Intl.DateTimeFormat("es-PE",{timeZone:"America/Lima",month:"long",year:"numeric"}).format(new Date());
+  const cards=[
+    ["users","azul","Clientes registrados",clientes.length],
+    ["calendar","naranja","Reservas del mes",totals.reservasMes],
+    ["court","verde","Canchas habilitadas",`${canchas.filter(c=>c.estado==="Disponible").length}/${canchas.length}`],
+    ["wallet","ambar",`Ingresos del mes (${month})`,money(totals.ingresos)]
+  ];
+  return <section><div className="pagina-encabezado"><div><h1>Resumen general</h1><p>Consulta las operaciones y los ingresos del mes.</p></div></div>
+    <div className="stats-grid">{cards.map(([icon,color,label,value])=><div className="stat-card" key={icon}><div className={`stat-icono ${color}`}><Icon name={icon} size={22}/></div><div><h4>{label}</h4><p className="stat-valor">{value}</p></div></div>)}</div>
+    {[["Reservas recientes",totals.recientes],["Próximas reservas",totals.proximas]].map(([title,rows])=>{
+      const visible=filtrar(rows,params.get("q"),search);
+      return <div className="tabla-caja" key={title}><div className="tabla-cabecera"><h3>{title}</h3><Link to="/panel/horarios">Ver todas<Icon name="arrow" size={16}/></Link></div>
+        <table className="tabla"><thead><tr><th>Cliente</th><th>Cancha</th><th>Fecha</th><th>Hora</th><th>Estado</th></tr></thead><tbody>
+          {visible.length===0 && <tr><td colSpan={5} className="tabla-vacio">{params.get("q") ? "No hay coincidencias." : "No hay reservas para mostrar."}</td></tr>}
+          {visible.map(r=><tr key={r.id}><td>{nombre(clientes,r.idCliente)}</td><td>{nombre(canchas,r.idCancha)}</td><td>{r.fechaReserva}</td><td>{hora(horarios.find(h=>h.id===r.idHorario))}</td><td><Badge value={r.estado}/></td></tr>)}
+        </tbody></table></div>;
+    })}
+  </section>;
 }
-
-function horaDe(lista, id) {
-  const encontrado = lista.find((item) => item.id === id);
-  return encontrado ? `${encontrado.horaInicio} - ${encontrado.horaFin}` : `#${id}`;
-}
-
-function estadoClase(estado) {
-  if (!estado) return "azul";
-  const valor = estado.toLowerCase();
-  if (valor.includes("confirm")) return "confirmada";
-  if (valor.includes("pendiente")) return "pendiente";
-  if (valor.includes("cancel")) return "cancelada";
-  if (valor.includes("pagad")) return "pagado";
-  return "azul";
-}
-
-function DashboardPage() {
-  const [canchas, setCanchas] = useState([]);
-  const [clientes, setClientes] = useState([]);
-  const [horarios, setHorarios] = useState([]);
-  const [reservas, setReservas] = useState([]);
-  const [pagos, setPagos] = useState([]);
-  const mesActual = new Date().toLocaleDateString("es-PE", {
-    month: "long",
-    year: "numeric",
-  });
-
-  useEffect(() => {
-    obtenerCanchas().then(setCanchas).catch(console.error);
-    obtenerClientes().then(setClientes).catch(console.error);
-    obtenerHorarios().then(setHorarios).catch(console.error);
-    obtenerReservas().then(setReservas).catch(console.error);
-    obtenerPagos().then(setPagos).catch(console.error);
-  }, []);
-
-  const disponibles = canchas.filter((c) =>
-    String(c.estado).toLowerCase().includes("dispon")
-  ).length;
-
-  const reservasDelMes = reservas.filter((r) =>
-    String(r.fechaReserva || "").startsWith(new Date().toISOString().slice(0, 7))
-  );
-
-  const ingresos = pagos
-    .filter((p) => String(p.estado).toLowerCase().includes("pagad"))
-    .reduce((total, p) => total + (Number(p.monto) || 0), 0);
-
-  return (
-    <div>
-      <div className="pagina-encabezado">
-        <div>
-          <h1>👋 ¡Bienvenido, Administrador!</h1>
-          <p>Aquí puedes gestionar todas las operaciones del sistema.</p>
-        </div>
-      </div>
-
-      <div className="stats-grid">
-        <div className="stat-card">
-          <div className="stat-icono azul">👥</div>
-          <div>
-            <h4>Clientes registrados</h4>
-            <p className="stat-valor">{clientes.length}</p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icono naranja">📅</div>
-          <div>
-            <h4>Reservas del mes</h4>
-            <p className="stat-valor">{reservasDelMes.length}</p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icono verde">🏐</div>
-          <div>
-            <h4>Canchas disponibles</h4>
-            <p className="stat-valor">{disponibles}/{canchas.length}</p>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icono ambar">💰</div>
-          <div>
-            <h4>Ingresos del mes {mesActual && <span>({mesActual})</span>}</h4>
-            <p className="stat-valor">S/ {ingresos.toFixed(2)}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="tabla-caja">
-        <div className="tabla-cabecera">
-          <h3>Reservas recientes</h3>
-          <Link to="/panel/horarios">Ver todas →</Link>
-        </div>
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Cancha</th>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservas.length === 0 && (
-              <tr>
-                <td colSpan="5" className="tabla-vacio">
-                  No hay reservas registradas.
-                </td>
-              </tr>
-            )}
-            {reservas.slice(0, 4).map((reserva) => (
-              <tr key={reserva.id}>
-                <td>{nombreDe(clientes, reserva.idCliente)}</td>
-                <td>{nombreDe(canchas, reserva.idCancha)}</td>
-                <td>{reserva.fechaReserva}</td>
-                <td>{horaDe(horarios, reserva.idHorario)}</td>
-                <td>
-                  <span className={`badge ${estadoClase(reserva.estado)}`}>
-                    {reserva.estado}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="tabla-caja">
-        <div className="tabla-cabecera">
-          <h3>Próximas reservas</h3>
-          <Link to="/panel/horarios">Ver todas →</Link>
-        </div>
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Hora</th>
-              <th>Cliente</th>
-              <th>Cancha</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservas.length === 0 && (
-              <tr>
-                <td colSpan="4" className="tabla-vacio">
-                  No hay reservas próximas.
-                </td>
-              </tr>
-            )}
-            {reservas.slice(0, 4).map((reserva) => (
-              <tr key={reserva.id}>
-                <td>{horaDe(horarios, reserva.idHorario)}</td>
-                <td>{nombreDe(clientes, reserva.idCliente)}</td>
-                <td>{nombreDe(canchas, reserva.idCancha)}</td>
-                <td>
-                  <span className={`badge ${estadoClase(reserva.estado)}`}>
-                    {reserva.estado}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-export default DashboardPage;

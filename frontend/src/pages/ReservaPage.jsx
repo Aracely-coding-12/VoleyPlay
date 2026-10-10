@@ -1,5 +1,5 @@
 import ReservaCard from "../components/ReservaCard.jsx";
-import { obtenerReservas } from "../service/ReservaServise.jsx";
+import { obtenerReservas } from "../service/ReservaServise.js";
 import { useEffect, useState } from "react";
 import "../styles/Reserva.css";
 

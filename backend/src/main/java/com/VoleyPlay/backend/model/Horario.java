@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "horario", schema = "voley_playa")
+@Table(name = "horario", schema = "voley_playa", uniqueConstraints = @UniqueConstraint(columnNames = {"hora_inicio", "hora_fin"}))
 public class Horario {
 
     @Id

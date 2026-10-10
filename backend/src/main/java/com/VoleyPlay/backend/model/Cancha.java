@@ -11,6 +11,7 @@ public class Cancha {
     @Column(name = "id_cancha")
     private Long id;
 
+    @Column(unique = true, nullable = false)
     private int numero;
 
     private String nombre;

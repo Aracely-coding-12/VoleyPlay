@@ -1,5 +1,5 @@
 import HorarioCard from "../components/HorarioCard.jsx";
-import { obtenerHorarios } from "../service/HorarioServise.jsx";
+import { obtenerHorarios } from "../service/HorarioServise.js";
 import { useEffect, useState } from "react";
 import "../styles/Horario.css";
 

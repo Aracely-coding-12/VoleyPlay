@@ -1,146 +1,59 @@
-import { useEffect, useState } from "react";
-import { obtenerCanchas } from "../service/CanchaService.jsx";
-import { obtenerClientes } from "../service/ClienteService.jsx";
-import { obtenerHorarios } from "../service/HorarioServise.jsx";
-import { obtenerReservas } from "../service/ReservaServise.jsx";
-import "../styles/Admin.css";
-
-function nombreDe(lista, id) {
-  const encontrado = lista.find((item) => item.id === id);
-  return encontrado ? encontrado.nombre : `#${id}`;
-}
-
-function estadoClase(estado) {
-  if (!estado) return "azul";
-  const valor = String(estado).toLowerCase();
-  if (valor.includes("confirm")) return "confirmada";
-  if (valor.includes("pendiente")) return "pendiente";
-  if (valor.includes("cancel")) return "cancelada";
-  if (valor.includes("dispon")) return "disponible";
-  if (valor.includes("reserv")) return "reservada";
-  return "azul";
-}
-
-function HorariosReservasPage() {
-  const [canchas, setCanchas] = useState([]);
-  const [clientes, setClientes] = useState([]);
-  const [horarios, setHorarios] = useState([]);
-  const [reservas, setReservas] = useState([]);
-
-  useEffect(() => {
-    obtenerCanchas().then(setCanchas).catch(console.error);
-    obtenerClientes().then(setClientes).catch(console.error);
-    obtenerHorarios().then(setHorarios).catch(console.error);
-    obtenerReservas().then(setReservas).catch(console.error);
-  }, []);
-
-  function estadoCelda(idHorario, idCancha) {
-    const ocupada = reservas.some(
-      (r) => r.idHorario === idHorario && r.idCancha === idCancha
-    );
-    return ocupada ? "Reservada" : "Disponible";
-  }
-
-  const hoy = new Date().toISOString().slice(0, 10);
-  const reservasDeHoy = reservas.filter((r) => r.fechaReserva === hoy);
-
-  return (
-    <div>
-      <div className="pagina-encabezado">
-        <div>
-          <h1>Horarios y reservas</h1>
-          <p>Consulta y gestiona los horarios de las canchas.</p>
-        </div>
-      </div>
-
-      <div className="tabla-caja">
-        <div className="tabla-cabecera">
-          <h3>Horarios de las canchas</h3>
-        </div>
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Hora</th>
-              {canchas.map((cancha) => (
-                <th key={cancha.id}>{cancha.nombre}</th>
-              ))}
-              {canchas.length === 0 && <th>Canchas</th>}
-            </tr>
-          </thead>
-          <tbody>
-            {horarios.length === 0 && (
-              <tr>
-                <td colSpan={canchas.length + 1} className="tabla-vacio">
-                  No hay horarios registrados.
-                </td>
-              </tr>
-            )}
-            {horarios.map((horario) => (
-              <tr key={horario.id}>
-                <td>{horario.horaInicio} - {horario.horaFin}</td>
-                {canchas.map((cancha) => {
-                  const texto = estadoCelda(horario.id, cancha.id);
-                  return (
-                    <td key={cancha.id}>
-                      <span className={`badge ${texto.toLowerCase()}`}>
-                        {texto}
-                      </span>
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="tabla-caja">
-        <div className="tabla-cabecera">
-          <h3>Reservas del día</h3>
-        </div>
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th>Cliente</th>
-              <th>Hora</th>
-              <th>Cancha</th>
-              <th>Total</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reservasDeHoy.length === 0 && (
-              <tr>
-                <td colSpan="5" className="tabla-vacio">
-                  No hay reservas para hoy.
-                </td>
-              </tr>
-            )}
-            {reservasDeHoy.map((reserva) => {
-              const horario = horarios.find((h) => h.id === reserva.idHorario);
-              return (
-                <tr key={reserva.id}>
-                  <td>{nombreDe(clientes, reserva.idCliente)}</td>
-                  <td>
-                    {horario
-                      ? `${horario.horaInicio} - ${horario.horaFin}`
-                      : `#${reserva.idHorario}`}
-                  </td>
-                  <td>{nombreDe(canchas, reserva.idCancha)}</td>
-                  <td>S/ {reserva.total}</td>
-                  <td>
-                    <span className={`badge ${estadoClase(reserva.estado)}`}>
-                      {reserva.estado}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { usePanel } from "../context/contexts.js";
+import EntityPage from "../components/EntityPage.jsx";
+import Badge from "../components/Badge.jsx";
+import { estadoCelda, fechaLima, horaLima, filtrar, hora, nombre, money } from "../utils/domain.js";
+export default function HorariosReservasPage() {
+  const { canchas,clientes,horarios,reservas }=usePanel();
+  const [fecha,setFecha]=useState(fechaLima);
+  const [tab,setTab]=useState("reservas");
+  const [params]=useSearchParams();
+  const ordered=[...horarios].sort((a,b)=>a.horaInicio.localeCompare(b.horaInicio));
+  const visibleCourts=filtrar(canchas,params.get("q"));
+  const search=row=>[...Object.values(row),nombre(clientes,row.idCliente),nombre(canchas,row.idCancha),hora(horarios.find(h=>h.id===row.idHorario))];
+  return <section>
+    <div className="pagina-encabezado"><div><h1>Horarios y reservas</h1><p>Gestiona los turnos y consulta la disponibilidad por fecha.</p></div>
+      <div className="campo"><label htmlFor="availability-date">Fecha de disponibilidad</label><input id="availability-date" type="date" value={fecha} required onChange={e=>{if(e.target.value)setFecha(e.target.value);}}/></div>
     </div>
-  );
+    <div className="tabla-caja"><div className="tabla-cabecera"><h3>Disponibilidad · {fecha}</h3></div><table className="tabla"><thead><tr><th>Horario</th>{visibleCourts.map(c=><th key={c.id}>{c.nombre}</th>)}</tr></thead><tbody>
+      {(!ordered.length || !visibleCourts.length) && <tr><td className="tabla-vacio" colSpan={visibleCourts.length+1}>Registra canchas y horarios para consultar disponibilidad.{params.get("q") && " Revisa también la búsqueda."}</td></tr>}
+      {visibleCourts.length>0 && ordered.map(h=><tr key={h.id}><td>{hora(h)}</td>{visibleCourts.map(c=><td key={c.id}><Badge value={estadoCelda(h,c,fecha,reservas,horarios)}/></td>)}</tr>)}
+    </tbody></table></div>
+    <div className="section-tabs" role="tablist" aria-label="Gestión de horarios y reservas">
+      <button id="reservas-tab" role="tab" aria-selected={tab==="reservas"} aria-controls="gestion-panel" className={tab==="reservas"?"active":""} onClick={()=>setTab("reservas")}>Reservas</button>
+      <button id="horarios-tab" role="tab" aria-selected={tab==="horarios"} aria-controls="gestion-panel" className={tab==="horarios"?"active":""} onClick={()=>setTab("horarios")}>Horarios</button>
+    </div>
+    <div id="gestion-panel" role="tabpanel" aria-labelledby={`${tab}-tab`}>
+    {tab==="horarios" ? <EntityPage embedded key="horarios" title="Horarios" description="Define las horas y el precio de cada turno." singular="Horario" path="/horario" rows={ordered}
+      initial={{horaInicio:"",horaFin:"",precio:"",estado:"Disponible"}} numeric={["precio"]}
+      columns={[{key:"id",label:"ID"},{key:"hora",label:"Turno",render:hora},{key:"precio",label:"Precio",render:h=>money(h.precio)},{key:"estado",label:"Estado",render:h=><Badge value={h.estado}/>} ]}
+      fields={[{name:"horaInicio",label:"Hora de inicio",type:"time",required:true},{name:"horaFin",label:"Hora de fin",type:"time",required:true},
+        {name:"precio",label:"Precio del turno",type:"number",min:.01,step:.01,required:true},{name:"estado",label:"Estado",options:["Disponible","Inactivo","Ocupado","En proceso","Reservado"]}]}
+      validate={form=>form.horaInicio===form.horaFin ? "Las horas de inicio y fin deben ser distintas." : null} /> :
+    <EntityPage embedded key="reservas" title="Reservas" description="Registra, edita o cancela las reservas de tus clientes." singular="Reserva" path="/reserva" rows={[...reservas].sort((a,b)=>b.id-a.id)}
+      initial={()=>({idCliente:"",idCancha:"",idHorario:"",fechaReserva:fecha,estado:"Pendiente"})} numeric={["idCliente","idCancha","idHorario"]} searchValues={search}
+      columns={[{key:"id",label:"ID"},{key:"cliente",label:"Cliente",render:r=>nombre(clientes,r.idCliente)},{key:"cancha",label:"Cancha",render:r=>nombre(canchas,r.idCancha)},
+        {key:"fechaReserva",label:"Fecha"},{key:"hora",label:"Turno",render:r=>hora(horarios.find(h=>h.id===r.idHorario))},{key:"total",label:"Total",render:r=>money(r.total)},{key:"estado",label:"Estado",render:r=><Badge value={r.estado}/>} ]}
+      fields={[{name:"idCliente",label:"Cliente",required:true,placeholder:"Seleccionar cliente",options:clientes.map(c=>({value:c.id,label:nombre(clientes,c.id)}))},
+        {name:"idCancha",label:"Cancha",required:true,placeholder:"Seleccionar cancha",options:canchas.map(c=>({value:c.id,label:`${c.nombre} · ${c.estado}`}))},
+        {name:"fechaReserva",label:"Fecha de reserva",type:"date",required:true},
+        {name:"idHorario",label:"Horario",required:true,placeholder:"Seleccionar horario",options:(form,id)=>ordered.map(h=>{
+          const c=canchas.find(row=>row.id===Number(form.idCancha)); const state=c ? estadoCelda(h,c,form.fechaReserva,reservas,horarios,id) : h.estado;
+          return {value:h.id,label:`${hora(h)} · ${money(h.precio)} · ${state}`};
+        })},{name:"estado",label:"Estado",options:["Pendiente","Confirmada","Cancelada"]}]}
+      validate={(form,id)=>{
+        const old=reservas.find(r=>r.id===id);
+        const changed=!old || old.idCancha!==Number(form.idCancha) || old.idHorario!==Number(form.idHorario) || old.fechaReserva!==form.fechaReserva;
+        const reactivated=old?.estado==="Cancelada" && form.estado!=="Cancelada";
+        if(form.estado==="Cancelada") return;
+        if((changed || reactivated) && form.fechaReserva<fechaLima()) return "No puedes reservar una fecha pasada.";
+        const c=canchas.find(row=>row.id===Number(form.idCancha)), h=horarios.find(row=>row.id===Number(form.idHorario));
+        if(!c || !h) return "Selecciona cancha y horario.";
+        if ((changed || reactivated) && form.fechaReserva===fechaLima() && h.horaInicio<=horaLima()) return "El horario seleccionado ya comenzó.";
+        const state=estadoCelda(h,c,form.fechaReserva,reservas,horarios,id);
+        if(state==="Reservada" || ((changed || reactivated) && state!=="Disponible")) return "La cancha o el turno seleccionado no están disponibles.";
+      }} />}
+    </div>
+  </section>;
 }
-
-export default HorariosReservasPage;

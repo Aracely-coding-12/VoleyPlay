@@ -9,9 +9,9 @@ body {
 }
 
 body {
-  font-family: "Poppins", system-ui, "Segoe UI", Roboto, sans-serif;
-  background: #f4f6f8;
-  color: #0b2a4a;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #f6f7f9;
+  color: #202b3b;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
