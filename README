@@ -1,0 +1,283 @@
+#-------------------Nombre del Proyecto: VOLEY PLAY-------------------------------------
+#Sistema de Reserva de Canchas de Vóley
+Sistema web para la gestión de reservas de canchas de vóley playa. Permite
+administrar clientes, canchas, horarios, reservas y pagos desde un panel de
+administración con control de acceso.
+
+// ----------INTEGRANTES-----------
+// 1-Susan Aracely Ñahuinripa Quispe
+// 2-
+// 3-
+// 4-
+// 5-
+## Descripción del problema
+
+Las canchas de vóley playa suelen reservarse por teléfono o WhatsApp, lo que
+provoca cruces de horarios, dobles reservas de la misma cancha y dificultad
+para controlar los pagos.
+
+**Vóley Play** centraliza todo el proceso:
+
+- Un cliente elige una cancha, una fecha y un horario.
+- El sistema **impide reservas que se crucen** en la misma cancha.
+- El precio del turno se toma automáticamente del horario.
+- Se controla que **no se pague más del saldo** de la reserva.
+- No se puede eliminar datos que tengan registros vinculados.
+
+---
+
+## Tecnologías
+
+ Capa | Tecnología 
+ Frontend  React 19 + Vite + React Router 
+ Backend  Java 21 + Spring Boot 4.1.1 
+ Vistas  Thymeleaf 
+ Seguridad  Spring Security (sesión por cookie) 
+ Base de datos - PostgreSQL 
+ Base de datos en la nube - Neon 
+ Despliegue backend - Railway 
+ Despliegue frontend - Vercel 
+
+---
+
+## Enlaces públicos
+
+ Recurso - URL 
+ Frontend (Vercel) | https://voley-play.vercel.app 
+ Backend (Railway) | https://voleyplay-production.up.railway.app 
+
+---
+
+## Funcionalidades implementadas
+
+### Gestión completa (CRUD) de 5 entidades
+ Entidad - Campos
+ **Clientes** : nombre, apellido, DNI, teléfono, email 
+ **Canchas** : número, nombre, superficie, estado 
+ **Horarios** : hora de inicio, hora de fin, precio, estado 
+ **Reservas** : cliente, cancha, horario, fecha, estado, total 
+ **Pagos** : reserva, fecha, monto, método, estado 
+
+### Autenticación y seguridad
+
+- Inicio de sesión con Spring Security (sesión por cookie `JSESSIONID`).
+- Configuración del usuario administrador por variables de entorno.
+- Contraseñas almacenadas con hash `{bcrypt}`.
+- Cierre de sesión que invalida la sesión y borra la cookie.
+- Todas las rutas del panel requieren sesión activa; sin ella se redirige a `/login`.
+- Guardado automático del token CSRF.
+
+### Reservas
+
+- **Validación de disponibilidad**: no permite reservar una cancha en un turno
+  que ya esté ocupado (compara intervalos de fecha y hora).
+- **Control de horarios pasados**: no se puede reservar una fecha anterior a hoy.
+- **Soporta turnos que cruzan la medianoche** (cuando la hora de fin es menor
+  que la de inicio).
+- El **total se calcula** con el precio del horario seleccionado.
+
+### Pagos
+
+- **No se puede pagar más del saldo pendiente** de la reserva.
+- No se pueden registrar pagos en reservas canceladas.
+- Validación de monto positivo con máximo 2 decimales.
+
+### Integridad de datos
+
+- DNI de cliente, número de cancha y correo **únicos**.
+- No se puede eliminar un cliente, cancha, horario o reserva que tenga registros vinculados.
+- Validación de formatos: DNI de 8 dígitos, teléfono, correo electrónico.
+- Eliminación en **dos pasos** (pide confirmación).
+
+### Disponibilidad
+
+- Matriz de **horarios × canchas** para consultar qué turnos están libres en una fecha.
+- Marca cada celda como `Disponible`, `Reservado` o `Finalizado`.
+
+### Panel de administración
+
+- Buscador que ignora acentos y mayúsculas.
+- Resumen con clientes registrados, canchas disponibles, reservas del mes e ingresos.
+- Registro de nuevos usuarios administradores (deshabilitado por defecto, activable por invitación o abierto).
+
+---
+
+## Requisitos previos
+
+- **Java 21** o superior
+- **Maven** (el proyecto incluye `mvnw`, no es obligatorio instalarlo)
+- **PostgreSQL**tambien podrias ver teniendo las credenciales:
+-   "postgresql://neondb_owner:npg_qM7ETahCmsx0@ep-orange-sky-b4k1h0gz-pooler.c-6.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+- **Node.js 18+** (solo si quieres ejecutar el frontend React)
+
+---
+
+## Ejecutar el backend localmente
+
+### 1. Configurar la base de datos
+
+Crea una base de datos vacía. Ejemplo:
+
+```sql
+CREATE DATABASE voleyplay;
+```
+
+### 2. Crear el archivo de variables de entorno
+
+Copia el ejemplo y edítalo:
+
+```bash
+cd backend
+cp .env.example .env
+```
+
+Contenido de `backend/.env`:
+
+```properties
+DB_URL=jdbc:postgresql://ep-quiet-snow-axmryqji.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require
+DB_USER=neondb_owner
+DB_PASSWORD=npg_ZmcHSqIfk13D
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=kdl9se31a140w2oghe4oclv3
+FRONTEND_URL=https://voley-play.vercel.app/login
+SESSION_COOKIE_SECURE=false
+SESSION_SAME_SITE=lax
+PORT=8080
+REGISTRATION_MODE=disabled
+```
+
+> **Importante:** `ADMIN_PASSWORD` debe tener **mínimo 12 caracteres** o la
+> aplicación no arranca (`SecurityConfig.java:20`).
+
+### 3. Compilar y ejecutar
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+En Windows, si `mvnw` falla:
+
+```bash
+mvn spring-boot:run
+```
+
+El backend queda en **https://voleyplay-production.up.railway.app/panel**.
+
+### 4. Acceder
+
+Abre https://voleyplay-production.up.railway.app/panel
+e inicia sesión con el usuario y la contraseña que pusiste en `ADMIN_USERNAME` y `ADMIN_PASSWORD`.
+
+> El backend sirve tanto la API (`/api/**`) como las páginas del panel
+> (`/panel/**`, `/login`, `/registro`) con Thymeleaf.
+
+---
+
+## Ejecutar el frontend localmente (React)
+
+El frontend React se conserva como parte del historial del proyecto. Para
+arrancarlo contra el backend local:
+
+```bash
+cd frontend
+npm install
+```
+
+Crea `frontend/.env`:
+
+```properties
+VITE_API_URL=/api
+```
+
+Luego ejecuta:
+
+```bash
+npm run dev
+```
+
+El frontend queda en **https://voley-play.vercel.app/login** y redirige `/api/*` al backend
+en el puerto 8080.
+
+---
+
+## Perfiles de Spring
+
+El proyecto tiene tres perfiles definidos en `backend/src/main/resources/`:
+
+ Perfil  Base de datos - Uso 
+ `dev` - H2 en disco (`./data/voleyplay`) - Desarrollo sin PostgreSQL 
+ `neon` - PostgreSQL en Neon - Producción 
+ `test` - H2 en memoria - Pruebas automatizadas 
+
+Para activar un perfil:
+
+```bash
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+```
+
+---
+
+## Pruebas
+
+El proyecto incluye pruebas de integración que levantan el contexto completo de
+Spring, con casos de login exitoso y fallido, registro de usuarios, validación
+de contraseñas y verificación del hash bcrypt:
+
+```bash
+cd backend
+./mvnw test
+```
+
+---
+
+## Estructura del proyecto
+
+```
+VoleyPlay/
+── backend/
+   ── src/main/
+       ├── java/com/VoleyPlay/backend/
+       │   ├── config/        # CORS y Spring Security
+       │   ├── controller/    # Endpoints API y controlador web (Thymeleaf)
+       │   ├── model/         # Entidades JPA
+       │   ├── repository/    # Acceso a datos
+       │   └── services/      # Lógica de negocio y validaciones
+       └── resources/
+           ├── application.properties
+           ├── templates/     # Vistas Thymeleaf
+           └── static/        # CSS e imágenes
+── frontend/                  # React + Vite
+    ── src/
+        ├── components/
+        ├── context/
+        ├── layout/
+        ├── pages/
+        ├── service/
+        └── utils/
+```
+
+---
+
+## Pasos para ejecutar backend y frontend localmente
+------------- Empecemos como ejecutar el backend ----------------------
+- 1 paso: Primero nos vamos a la pagina de railway donde se desplegara el backend
+- 2 paso: Iniciamos sesion vinculando con nuestro GITHUB
+- 3 paso: Una vez ya vinculado, nos vamos a nuevo proyecto
+- 4 paso: haces click en repositorios de GitHub, aparacera todos los repositorios que tienes 
+- 5 paso: Escogemos el repositorio ya limpio de nuestro proyecto, donde esta el backend y el frontend 
+- 6 paso: Dentro ya del proyecto creado en railway creamos, nos vamos a las variables 
+- 7 paso: Complementamos las variables con las credenciales que tenemos
+- 8 paso: Nos vamos a ajustes - rect directory y escogemos el documento backened 
+
+------------- Ahora para ejecutar el frontend ------------------------
+- 1 paso: Hacemos lo mismo que railway, buscamos la pagina de vercel y
+          iniciamos sesion vinculando con nuestro GitHub.
+- 2 paso: Una vez ya iniciado sesion, nos vamos a la opcion de nuevo 
+          proyecto y buscamos el repositorio de nuestra pagina web.
+- 3 paso: seleccionamos el archivo de frontend, por que el frontend    
+          correra con el vercel.
+- 4 paso: Conectamos con el VITE_API_URL
+- 5 paso: Le damos enter y ya esta conectado
+- Recuerda cambiar el URL que psusiste como variable en railway ya que 
+  funcionara con una nueva
