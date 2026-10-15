@@ -1,15 +1,15 @@
-#Nombre del Proyecto: VOLEY PLAY
-#Sistema de Reserva de Canchas de Vóley
+## Nombre del Proyecto: VOLEY PLAY
+## Sistema de Reserva de Canchas de Vóley
 Sistema web para la gestión de reservas de canchas de vóley playa. Permite
 administrar clientes, canchas, horarios, reservas y pagos desde un panel de
 administración con control de acceso.
 
-// INTEGRANTES
-// 1-Susan Aracely Ñahuinripa Quispe
-// 2-Clara Luz Chero Rios
-// 3-Jhoau Alexander Zerraga Lopez
-// 4-JOHN BENJAMIN ABARCA DIAZ
-// 5-CHRISTIAN ESTEBAN JONELL AREVALO VILLACORTA
+## INTEGRANTES
+### 1-Susan Aracely Ñahuinripa Quispe
+### 2-Clara Luz Chero Rios
+### 3-Jhoau Alexander Zerraga Lopez
+### 4-John Benjamin Abarca Diaz
+### 5-Christian Esteban Jonell Arevalo Villacorta
 
 ## Descripción del problema
 
@@ -260,8 +260,8 @@ VoleyPlay/
 
 ---
 
-## Pasos para ejecutar backend y frontend localmente
-------------- Empecemos como ejecutar el backend ----------------------
+Pasos para ejecutar backend y frontend localmente
+Empecemos como ejecutar el backend 
 - 1 paso: Primero nos vamos a la pagina de railway donde se desplegara el backend
 - 2 paso: Iniciamos sesion vinculando con nuestro GITHUB
 - 3 paso: Una vez ya vinculado, nos vamos a nuevo proyecto
@@ -271,7 +271,7 @@ VoleyPlay/
 - 7 paso: Complementamos las variables con las credenciales que tenemos
 - 8 paso: Nos vamos a ajustes - rect directory y escogemos el documento backened 
 
-------------- Ahora para ejecutar el frontend ------------------------
+Ahora para ejecutar el frontend
 - 1 paso: Hacemos lo mismo que railway, buscamos la pagina de vercel y
           iniciamos sesion vinculando con nuestro GitHub.
 - 2 paso: Una vez ya iniciado sesion, nos vamos a la opcion de nuevo 
