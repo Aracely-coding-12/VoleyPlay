@@ -1,10 +1,10 @@
-#-------------------Nombre del Proyecto: VOLEY PLAY-------------------------------------
+#Nombre del Proyecto: VOLEY PLAY
 #Sistema de Reserva de Canchas de Vóley
 Sistema web para la gestión de reservas de canchas de vóley playa. Permite
 administrar clientes, canchas, horarios, reservas y pagos desde un panel de
 administración con control de acceso.
 
-// ----------INTEGRANTES-----------
+// INTEGRANTES
 // 1-Susan Aracely Ñahuinripa Quispe
 // 2-Clara Luz Chero Rios
 // 3-Jhoau Alexander Zerraga Lopez
