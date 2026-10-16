@@ -7,7 +7,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 public class CorsConfig implements WebMvcConfigurer {
-    @Value("${frontend.url:http://localhost:5173}")
+    @Value("${frontend.url:http://voley-play.vercel.app}")
     private String frontendUrl;
 
     @Override
